@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Churn Predictor</title>
+  <style>
+    :root{--bg1:#f6f8ff;--card:#ffffff;--accent:#4f46e5;--accent-2:#06b6d4;--muted:#6b7280;--success:#16a34a;--danger:#ef4444}
+    body{font-family:system-ui,Arial;margin:0;background:linear-gradient(180deg,var(--bg1),#ffffff);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:36px 12px}
+    .card{background:var(--card);box-shadow:0 6px 18px rgba(15,23,42,0.08);border-radius:12px;padding:24px;width:420px}
+    h2{margin:0 0 12px 0;color:var(--accent)}
+    label{display:block;margin-top:10px;color:var(--muted);font-size:14px}
+    input, select{width:100%;padding:8px;border:1px solid #e6e7ee;border-radius:6px;margin-top:6px}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    button[type="submit"]{background:var(--accent);color:#fff}
+    #sampleBtn{background:var(--accent-2);color:#fff}
+    pre{background:#0f172a;color:#fff;padding:12px;border-radius:8px;margin-top:12px;min-height:48px;display:flex;align-items:center;justify-content:center}
+    .muted{color:var(--muted);font-size:13px;margin-top:8px}
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    form label{display:flex;flex-direction:column;margin:0}
+    .controls{display:flex;gap:10px;justify-content:center;margin-top:12px}
+    .btn{padding:10px 14px;border-radius:8px;border:none;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+    .btn:active{transform:translateY(1px)}
+    #sampleBtn{background:var(--accent-2);color:#fff}
+    #submitBtn{background:linear-gradient(90deg,var(--accent), #7c3aed);color:#fff}
+    #spinner{width:20px;height:20px;border-radius:50%;border:3px solid rgba(255,255,255,0.2);border-top-color:rgba(255,255,255,0.9);animation:spin 800ms linear infinite;display:inline-block;vertical-align:middle;margin-left:8px}
+    #spinner.hidden{display:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #resultArea{margin-top:14px}
+    #statusRow{display:flex;align-items:center;gap:12px}
+    #badge{padding:6px 10px;border-radius:999px;color:#fff;font-weight:600;min-width:60px;text-align:center}
+    #probBar{flex:1;height:12px;background:#eef2ff;border-radius:999px;overflow:hidden}
+    #probFill{height:100%;width:0;background:linear-gradient(90deg,#ef4444,#f97316)}
+  </style>
+</head>
+<body>
+  <div class="card">
+  <h2>Customer Churn Predictor</h2>
+  <form id="frm">
+    <div class="form-grid">
+    <label>Gender
+      <select name="gender"><option>Female</option><option>Male</option></select>
+    </label>
+    <label>SeniorCitizen
+      <select name="SeniorCitizen"><option value="0">0</option><option value="1">1</option></select>
+    </label>
+    <label>Partner <select name="Partner"><option>Yes</option><option>No</option></select></label>
+    <label>Dependents <select name="Dependents"><option>No</option><option>Yes</option></select></label>
+    <label>Tenure <input name="tenure" type="number" value="5"/></label>
+    <label>PhoneService <select name="PhoneService"><option>Yes</option><option>No</option></select></label>
+    <label>MultipleLines <select name="MultipleLines"><option>No</option><option>Yes</option><option>No phone service</option></select></label>
+    <label>InternetService <select name="InternetService"><option>Fiber optic</option><option>DSL</option><option>No</option></select></label>
+    <label>OnlineSecurity <select name="OnlineSecurity"><option>No</option><option>Yes</option><option>No internet service</option></select></label>
+    <label>OnlineBackup <select name="OnlineBackup"><option>No</option><option>Yes</option><option>No internet service</option></select></label>
+    <label>DeviceProtection <select name="DeviceProtection"><option>No</option><option>Yes</option><option>No internet service</option></select></label>
+    <label>TechSupport <select name="TechSupport"><option>No</option><option>Yes</option><option>No internet service</option></select></label>
+    <label>StreamingTV <select name="StreamingTV"><option>No</option><option>Yes</option><option>No internet service</option></select></label>
+    <label>StreamingMovies <select name="StreamingMovies"><option>No</option><option>Yes</option><option>No internet service</option></select></label>
+    <label>Contract <select name="Contract"><option>Month-to-month</option><option>One year</option><option>Two year</option></select></label>
+    <label>PaperlessBilling <select name="PaperlessBilling"><option>Yes</option><option>No</option></select></label>
+    <label>PaymentMethod <select name="PaymentMethod"><option>Electronic check</option><option>Mailed check</option><option>Bank transfer (automatic)</option><option>Credit card (automatic)</option></select></label>
+    <label>MonthlyCharges <input name="MonthlyCharges" type="number" step="0.1" value="85.5"/></label>
+    <label>TotalCharges <input name="TotalCharges" type="number" step="0.1" value="427.5"/></label>
+    </div>
+    <div class="controls">
+      <button type="submit" id="submitBtn" class="btn">Predict <span id="spinner" class="hidden"></span></button>
+      <button type="button" id="sampleBtn" class="btn">Use sample payload</button>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:flex-start;flex-direction:column">
+      <div style="display:flex;gap:8px">
+        <button type="button" id="toggleJson" class="btn" style="background:#fff;border:1px solid #e6e7ee;color:var(--muted)">Paste JSON</button>
+        <button type="button" id="jsonSampleBtn" class="btn" style="background:var(--accent-2);color:#fff">Use sample JSON</button>
+        <button type="button" id="jsonPredictBtn" class="btn" style="background:linear-gradient(90deg,var(--accent), #7c3aed);color:#fff;display:none">Predict from JSON <span id="spinnerJson" class="hidden"></span></button>
+      </div>
+      <textarea id="jsonInput" class="hidden" placeholder='Paste full JSON payload here and click "Predict from JSON"' style="width:100%;min-height:120px;border-radius:8px;border:1px solid #e6e7ee;padding:8px;margin-top:8px;font-family:monospace"></textarea>
+    </div>
+  </form>
+
+  <div id="resultArea">
+    <h3>Result</h3>
+    <div id="statusRow">
+      <div id="badge">—</div>
+      <div id="probBar"><div id="probFill"></div></div>
+    </div>
+    <pre id="out">No prediction yet</pre>
+  </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('frm');
+    const out = document.getElementById('out');
+    const badge = document.getElementById('badge');
+    const probFill = document.getElementById('probFill');
+    const spinner = document.getElementById('spinner');
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      const sampleBtn = document.getElementById('sampleBtn');
+      submitBtn.disabled = true; sampleBtn.disabled = true; spinner.classList.remove('hidden');
+      const fd = new FormData(form);
+      const obj = {};
+      for(const [k,v] of fd.entries()){
+        if(!isNaN(v) && v !== '') obj[k] = Number(v);
+        else obj[k] = v;
+      }
+      out.textContent = 'Calling API...'; out.style.background = 'transparent'; badge.textContent = '—'; probFill.style.width = '0%';
+      try{
+        const res = await fetch('/api/predict', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(obj)
+        });
+        const text = await res.text();
+        spinner.classList.add('hidden'); submitBtn.disabled = false; sampleBtn.disabled = false;
+        if (res.ok) {
+          try {
+            const j = JSON.parse(text);
+            const probRaw = j.churn_probability ?? j.churnProbability ?? 0;
+            const prob = Math.round(Math.min(Math.max(probRaw,0),1) * 100);
+            badge.textContent = j.prediction ?? '-';
+            badge.style.background = j.prediction === 'Yes' ? 'linear-gradient(90deg,#ef4444,#f43f5e)' : 'linear-gradient(90deg,#10b981,#06b6d4)';
+            probFill.style.width = prob + '%';
+            probFill.style.background = prob > 50 ? 'linear-gradient(90deg,#ef4444,#f97316)' : 'linear-gradient(90deg,#10b981,#06b6d4)';
+            out.textContent = JSON.stringify(j, null, 2);
+          } catch (e) {
+            out.style.background = '#f59e0b';
+            out.textContent = text;
+          }
+        } else {
+          out.style.background = '#f59e0b';
+          out.textContent = `Error ${res.status} ${res.statusText}\n${text}`;
+        }
+      }catch(err){
+        spinner.classList.add('hidden'); submitBtn.disabled = false; sampleBtn.disabled = false;
+        out.textContent = String(err);
+      }
+    });
+
+    // Fill the form with the exact sample payload and submit
+    document.getElementById('sampleBtn').addEventListener('click', ()=>{
+      const sample = {
+        gender: 'Female',
+        SeniorCitizen: 0,
+        Partner: 'Yes',
+        Dependents: 'No',
+        tenure: 5,
+        PhoneService: 'Yes',
+        MultipleLines: 'No',
+        InternetService: 'Fiber optic',
+        OnlineSecurity: 'No',
+        OnlineBackup: 'No',
+        DeviceProtection: 'No',
+        TechSupport: 'No',
+        StreamingTV: 'No',
+        StreamingMovies: 'No',
+        Contract: 'Month-to-month',
+        PaperlessBilling: 'Yes',
+        PaymentMethod: 'Electronic check',
+        MonthlyCharges: 85.5,
+        TotalCharges: 427.5
+      };
+      // populate fields
+      for(const k in sample){
+        const el = form.elements[k];
+        if(!el) continue;
+        if(el.tagName === 'SELECT' || el.type === 'text' || el.type === 'number') el.value = sample[k];
+      }
+      // submit
+      form.requestSubmit();
+    });
+
+    // JSON paste mode handlers
+    const toggleJson = document.getElementById('toggleJson');
+    const jsonInput = document.getElementById('jsonInput');
+    const jsonPredictBtn = document.getElementById('jsonPredictBtn');
+    const jsonSampleBtn = document.getElementById('jsonSampleBtn');
+    const spinnerJson = document.getElementById('spinnerJson');
+    function setJsonMode(on){
+      if(on){
+        jsonInput.classList.remove('hidden'); jsonPredictBtn.style.display = 'inline-block';
+        // disable form fields
+        Array.from(form.querySelectorAll('input,select,button')).forEach(el=>{ if(el.id !== 'jsonPredictBtn' && el.id !== 'jsonSampleBtn' && el.id !== 'toggleJson') el.disabled = true });
+      } else {
+        jsonInput.classList.add('hidden'); jsonPredictBtn.style.display = 'none';
+        Array.from(form.querySelectorAll('input,select,button')).forEach(el=> el.disabled = false );
+      }
+    }
+    toggleJson.addEventListener('click', ()=>{
+      const showing = !jsonInput.classList.contains('hidden');
+      setJsonMode(!showing);
+      toggleJson.textContent = showing ? 'Paste JSON' : 'Use form';
+    });
+
+    // populate JSON textarea with sample
+    jsonSampleBtn.addEventListener('click', ()=>{
+      const sample = {
+        gender: 'Female',
+        SeniorCitizen: 0,
+        Partner: 'Yes',
+        Dependents: 'No',
+        tenure: 5,
+        PhoneService: 'Yes',
+        MultipleLines: 'No',
+        InternetService: 'Fiber optic',
+        OnlineSecurity: 'No',
+        OnlineBackup: 'No',
+        DeviceProtection: 'No',
+        TechSupport: 'No',
+        StreamingTV: 'No',
+        StreamingMovies: 'No',
+        Contract: 'Month-to-month',
+        PaperlessBilling: 'Yes',
+        PaymentMethod: 'Electronic check',
+        MonthlyCharges: 85.5,
+        TotalCharges: 427.5
+      };
+      jsonInput.value = JSON.stringify(sample, null, 2);
+      // ensure JSON mode visible
+      setJsonMode(true);
+      toggleJson.textContent = 'Use form';
+    });
+
+    // Predict using pasted JSON
+    jsonPredictBtn.addEventListener('click', async ()=>{
+      let payload;
+      try{
+        payload = JSON.parse(jsonInput.value);
+      }catch(e){
+        out.style.background = '#f59e0b'; out.textContent = 'Invalid JSON: ' + e.message; return;
+      }
+      // disable UI
+      jsonPredictBtn.disabled = true; jsonSampleBtn.disabled = true; toggleJson.disabled = true; spinnerJson.classList.remove('hidden');
+      out.textContent = 'Calling API...'; out.style.background = 'transparent'; badge.textContent = '—'; probFill.style.width = '0%';
+      try{
+        const res = await fetch('/api/predict', {method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify(payload)});
+        const text = await res.text();
+        spinnerJson.classList.add('hidden'); jsonPredictBtn.disabled = false; jsonSampleBtn.disabled = false; toggleJson.disabled = false;
+        if(res.ok){
+          const j = JSON.parse(text);
+          const probRaw = j.churn_probability ?? j.churnProbability ?? 0;
+          const prob = Math.round(Math.min(Math.max(probRaw,0),1) * 100);
+          badge.textContent = j.prediction ?? '-';
+          badge.style.background = j.prediction === 'Yes' ? 'linear-gradient(90deg,#ef4444,#f43f5e)' : 'linear-gradient(90deg,#10b981,#06b6d4)';
+          probFill.style.width = prob + '%';
+          probFill.style.background = prob > 50 ? 'linear-gradient(90deg,#ef4444,#f97316)' : 'linear-gradient(90deg,#10b981,#06b6d4)';
+          out.textContent = JSON.stringify(j, null, 2);
+        } else {
+          out.style.background = '#f59e0b'; out.textContent = `Error ${res.status} ${res.statusText}\n${text}`;
+        }
+      }catch(err){
+        spinnerJson.classList.add('hidden'); jsonPredictBtn.disabled = false; jsonSampleBtn.disabled = false; toggleJson.disabled = false;
+        out.textContent = String(err);
+      }
+    });
+  </script>
+</body>
+</html>
