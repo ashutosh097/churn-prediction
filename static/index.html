@@ -106,7 +106,7 @@
       }
       out.textContent = 'Calling API...'; out.style.background = 'transparent'; badge.textContent = '—'; probFill.style.width = '0%';
       try{
-        const res = await fetch('/api/predict', {
+        const res = await fetch('/predict', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify(obj)
@@ -233,7 +233,7 @@
       jsonPredictBtn.disabled = true; jsonSampleBtn.disabled = true; toggleJson.disabled = true; spinnerJson.classList.remove('hidden');
       out.textContent = 'Calling API...'; out.style.background = 'transparent'; badge.textContent = '—'; probFill.style.width = '0%';
       try{
-        const res = await fetch('/api/predict', {method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify(payload)});
+        const res = await fetch('/predict', {method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify(payload)});
         const text = await res.text();
         spinnerJson.classList.add('hidden'); jsonPredictBtn.disabled = false; jsonSampleBtn.disabled = false; toggleJson.disabled = false;
         if(res.ok){

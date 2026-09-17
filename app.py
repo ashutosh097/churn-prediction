@@ -23,7 +23,7 @@ def root_index():
     return FileResponse("static/index.html")
 
 
-@app.post("/api/predict")
+@app.post("/predict")
 def predict_churn(payload: dict = Body(...)):
     try:
         df = pd.DataFrame([payload])
